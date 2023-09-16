@@ -1,0 +1,84 @@
+import os
+import tkinter as tk
+from tkinter import filedialog
+from pytube import YouTube, Playlist
+import subprocess
+import time
+
+# Function to download a video
+def download_video(url, save_path):
+    try:
+        yt = YouTube(url)
+        stream = yt.streams.get_highest_resolution()
+        stream.download(output_path=save_path)
+        print(f"Download completed: {yt.title}")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+# Function to download a playlist with a video limit
+def download_playlist_with_limit(playlist_url, save_directory, video_limit):
+    try:
+        playlist = Playlist(playlist_url)
+        
+        if video_limit >= len(playlist):
+            video_limit = len(playlist)
+
+        for video_url in playlist[:video_limit]:
+            download_video(video_url, save_directory)
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+# Function to open the folder after download
+def open_folder(folder_path):
+    try:
+        subprocess.Popen(["explorer", folder_path])
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+# Function to add a delay before opening the folder
+def download_and_open(url, save_path, delay_seconds=5):
+    download_video(url, save_path)
+    print(f"Opening the folder in {delay_seconds} seconds...")
+    time.sleep(delay_seconds)
+    open_folder(save_path)
+
+if __name__ == "__main__":
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    root = tk.Tk()
+    root.withdraw()
+
+    print("Choose an option:")
+    print("1. Download individual video")
+    print("2. Download a playlist")
+
+    choice = input("Enter the number of your choice: ")
+
+    if choice == "1":
+        video_url = input("Enter YouTube URL: ")
+        save_directory = filedialog.askdirectory(title="Select Save Folder")
+
+        if save_directory:
+            download_and_open(video_url, save_directory)
+
+    elif choice == "2":
+        playlist_url = input("Enter YouTube Playlist URL: ")
+        video_limit = int(input("Enter the number of videos to download from the playlist (enter 0 to download all): "))
+
+        if video_limit == 0:
+            video_limit = float('inf')  # Set video limit to infinity to download all videos
+
+        save_directory = filedialog.askdirectory(title="Select Save Folder")
+
+        if save_directory:
+            download_playlist_with_limit(playlist_url, save_directory, video_limit)
+
+            print(f"Opening the folder in 5 seconds...")
+            time.sleep(5)
+            open_folder(save_directory)
+
+    else:
+        print("Invalid choice. Please select a valid option.")
+
+    root.destroy()
